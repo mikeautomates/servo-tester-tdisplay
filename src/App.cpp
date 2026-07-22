@@ -4,7 +4,7 @@
 
 namespace {
 const char* kApSsid = "ServoTester";
-const char* kApPassword = "servotest123"; // 8+ chars, or "" for an open network
+const char* kApPassword = ""; // 8+ chars, or "" for an open network
 const unsigned long kLongPressMs = 700;
 const unsigned long kDisplayIntervalMs = 150;
 }  // namespace
