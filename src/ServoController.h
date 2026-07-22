@@ -36,6 +36,7 @@ public:
   void nudge(int direction); // direction: -1 or +1, moves by stepUs_
 
   void applyPreset(ServoPreset preset);
+  void cyclePreset(); // steps Center -> Max -> Min -> Center -> ... each call
 
   void startCrTest();
   void stopCrTest();
@@ -46,6 +47,7 @@ private:
   ServoMode mode_ = ServoMode::Web;
   int currentUs_ = SERVO_US_CENTER;
   int stepUs_ = 10;
+  int presetCycleIndex_ = 1; // 0=min, 1=center, 2=max; starts at center to match boot position
 
   // sweep state
   int sweepUs_ = 0;

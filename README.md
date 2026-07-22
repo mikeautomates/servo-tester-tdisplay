@@ -18,9 +18,16 @@ your phone to the AP and control the servo from a browser.
 - **Continuous-rotation (CR) test** — non-blocking guided sequence
   (Center → Max → Center → Min → Center) with on-screen instructions for
   judging whether a servo is positional or continuous-rotation
-- Onboard button (GPIO35): short press cycles Pot/Web/Sweep, long press
+- Onboard button 1 (GPIO35): short press cycles Pot/Web/Sweep, long press
   snaps straight to center from any mode — a physical "panic button" if the
   servo does something alarming and your phone isn't handy
+- Onboard button 2 (GPIO0): short press cycles Center → Max → Min → Center,
+  for quick physical position checks without needing your phone out. GPIO0
+  is the ESP32's boot-strap pin, but it's only read during normal runtime
+  here — safe as a button as long as you don't hold it while power-cycling
+  the board.
+- SSID/IP shown as a large scrolling marquee under the pulse-width bar so
+  it's readable from a few feet away
 
 ## Wiring
 
@@ -30,6 +37,7 @@ your phone to the AP and control the servo from a browser.
 | Servo signal | GPIO27 |
 | Servo power/ground | **separate 5–6V supply**, GND common with the ESP32 |
 | Mode button | GPIO35 (built into the T-Display board) |
+| Position button | GPIO0 (built into the T-Display board) |
 
 TFT pins (4, 5, 16, 18, 19, 23) are fixed by the board and already handled
 by `include/User_Setup_TDisplay.h` — don't reuse them.

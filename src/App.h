@@ -22,8 +22,12 @@ private:
   unsigned long buttonPressStartMs_ = 0;
   bool longPressHandled_ = false;
 
+  // onboard button (GPIO0): short press cycles Center -> Max -> Min -> Center
+  bool posButtonWasDown_ = false;
+
   unsigned long lastDisplayMs_ = 0;
 
   void handleButton();
+  void handlePosButton();
   void updateDisplay();
 };

@@ -76,9 +76,20 @@ void ServoController::applyPreset(ServoPreset preset) {
   mode_ = ServoMode::Web;
   crActive_ = false;
   switch (preset) {
-    case ServoPreset::Min:    writeUs(SERVO_US_MIN); break;
-    case ServoPreset::Max:    writeUs(SERVO_US_MAX); break;
-    case ServoPreset::Center: writeUs(SERVO_US_CENTER); break;
+    case ServoPreset::Min:    writeUs(SERVO_US_MIN); presetCycleIndex_ = 0; break;
+    case ServoPreset::Max:    writeUs(SERVO_US_MAX); presetCycleIndex_ = 2; break;
+    case ServoPreset::Center: writeUs(SERVO_US_CENTER); presetCycleIndex_ = 1; break;
+  }
+}
+
+void ServoController::cyclePreset() {
+  mode_ = ServoMode::Web;
+  crActive_ = false;
+  presetCycleIndex_ = (presetCycleIndex_ + 1) % 3;
+  switch (presetCycleIndex_) {
+    case 0: writeUs(SERVO_US_MIN);    break;
+    case 1: writeUs(SERVO_US_CENTER); break;
+    case 2: writeUs(SERVO_US_MAX);    break;
   }
 }
 

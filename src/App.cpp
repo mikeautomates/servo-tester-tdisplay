@@ -13,6 +13,7 @@ void App::begin() {
   Serial.begin(115200);
 
   pinMode(BOARD_MODE_BUTTON_PIN, INPUT_PULLUP);
+  pinMode(BOARD_POS_BUTTON_PIN, INPUT_PULLUP);
 
   if (!LittleFS.begin(true)) { // true = format if mount fails (first boot)
     Serial.println("LittleFS mount failed - web UI will not be served");
@@ -51,6 +52,17 @@ void App::handleButton() {
   buttonWasDown_ = down;
 }
 
+void App::handlePosButton() {
+  bool down = (digitalRead(BOARD_POS_BUTTON_PIN) == LOW);
+
+  if (!down && posButtonWasDown_) {
+    // short press only - no long-press behaviour on this button
+    servo_.cyclePreset();
+  }
+
+  posButtonWasDown_ = down;
+}
+
 void App::updateDisplay() {
   DisplayState state;
   state.modeName = servo_.modeName();
@@ -64,8 +76,11 @@ void App::updateDisplay() {
 
 void App::loop() {
   handleButton();
+  handlePosButton();
   servo_.loop();
   web_.loop();
+
+  display_.updateMarquee(wifi_.ssid(), wifi_.ipAddress());
 
   if (millis() - lastDisplayMs_ >= kDisplayIntervalMs) {
     lastDisplayMs_ = millis();

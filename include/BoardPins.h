@@ -12,7 +12,10 @@
 // GPIO 18  = TFT_SCLK                       |
 // GPIO 19  = TFT_MOSI                       |
 // GPIO 23  = TFT_RST                       /
-#define BOARD_MODE_BUTTON_PIN       35   // onboard button, input-only (avoid GPIO0 - boot strap pin)
+#define BOARD_MODE_BUTTON_PIN       35   // onboard button, input-only, mode cycle + long-press center
+#define BOARD_POS_BUTTON_PIN         0   // onboard button, position cycle (Center->Max->Min->Center)
+                                          // GPIO0 is the boot-strap pin: safe to read as a button once
+                                          // running, just don't hold it while power-cycling the board
 
 // ── Servo tester specific pins (free GPIOs on T-Display) ────────────────────
 #define SERVO_POT_PIN               34   // potentiometer wiper, ADC1 input-only
