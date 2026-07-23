@@ -79,6 +79,12 @@ void DisplayService::updateMarquee(const String& ssid, const String& ip, bool du
   }
   dualNudgeLabelDrawn_ = false; // reset so it redraws fresh the next time this mode is entered
 
+  // The sprite remembers whatever size/color was last set on it (from the
+  // red size-3 "-50" label above) - restore the normal marquee look every
+  // time we're not in dual-nudge mode, not just when the text changes.
+  marquee_.setTextSize(kMarqueeTextSize);
+  marquee_.setTextColor(TFT_YELLOW, TFT_BLACK);
+
   String text = "WiFi: " + ssid + "     http://" + ip + "     ";
 
   if (text != marqueeText_) {
