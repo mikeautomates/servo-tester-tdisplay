@@ -15,9 +15,17 @@ your phone to the AP and control the servo from a browser.
   buttons (1/5/10/25/50µs), Min/Center/Max presets
 - **Sweep mode** — auto-sweeps min↔max continuously, useful for exercising a
   servo or listening for binding
-- **+50 / -50 modes** — while in one of these, the position button (GPIO0)
-  nudges the pulse width by a fixed 50µs per press instead of cycling
-  presets, for quick phone-free fine positioning
+- **+50 / -50 modes** (physical buttons only, not shown in the web UI) —
+  while in one of these, the position button (GPIO0) nudges the pulse width
+  by a fixed 50µs per press instead of cycling presets
+- **Dual-nudge mode** (physical buttons only) — a long press (~0.8s) of the
+  position button (GPIO0) enters a mode where GPIO0 becomes -50µs and the
+  mode button (GPIO35) becomes +50µs, both as ordinary short presses - a
+  fast two-thumb way to walk the pulse width up/down without cycling
+  through modes first. Another long press of GPIO0 exits back to normal.
+  While active, "+50" appears in the top-right corner of the screen (near
+  the mode button) and "-50" appears in the bottom-right corner, in place
+  of the WiFi/IP marquee for as long as this mode stays active.
 - **Continuous-rotation (CR) test** — non-blocking guided sequence
   (Center → Max → Center → Min → Center) with on-screen instructions for
   judging whether a servo is positional or continuous-rotation
@@ -28,15 +36,18 @@ your phone to the AP and control the servo from a browser.
   400–2600µs ceiling is enforced in firmware regardless of this toggle.
   Always resets to locked on page load / power cycle.
 - Onboard button 1 (GPIO35, "mode button"):
-  - short press: cycles Pot → Web → Sweep → +50 → -50 → Pot ...
+  - short press: cycles Pot → Web → Sweep → +50 → -50 → Pot ..., or acts as
+    the +50 button while dual-nudge mode is active
   - ~1s hold: snaps straight to center from any mode (a physical "panic
     button" if the servo does something alarming and your phone isn't
-    handy)
-  - ~3s hold: toggles Extended Range on/off
+    handy) — works regardless of dual-nudge mode
+  - ~3s hold: toggles Extended Range on/off — also works regardless of
+    dual-nudge mode
 - Onboard button 2 (GPIO0, "position button"):
-  - in Pot/Web/Sweep modes: short press cycles Center → Max → Min → Center
-  - in +50/-50 modes: short press steps the pulse width by that fixed
-    amount instead
+  - short press: cycles Center → Max → Min → Center in Pot/Web/Sweep
+    modes, steps the pulse width by a fixed amount in +50/-50 modes, or
+    acts as the -50 button while dual-nudge mode is active
+  - ~0.8s hold: enters or exits dual-nudge mode
   - GPIO0 is the ESP32's boot-strap pin, but it's only read during normal
     runtime here — safe as a button as long as you don't hold it while
     power-cycling the board.

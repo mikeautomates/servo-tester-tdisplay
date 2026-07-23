@@ -15,7 +15,7 @@ void DisplayService::begin() {
 
 void DisplayService::render(const DisplayState& s) {
   // Skip redundant redraws (reduces flicker while the web UI is polling fast)
-  String key = String(s.modeName) + ":" + s.currentUs + ":" + s.crActive + ":" + s.extendedRange;
+  String key = String(s.modeName) + ":" + s.currentUs + ":" + s.crActive + ":" + s.extendedRange + ":" + s.dualNudgeActive;
   if (key == lastKey_) return;
   lastKey_ = key;
 
@@ -48,9 +48,37 @@ void DisplayService::render(const DisplayState& s) {
     tft_.setCursor(barX + barW - 40, barY - 10);
     tft_.print("DANGER");
   }
+
+  if (s.dualNudgeActive) {
+    // "+50" for the mode button (GPIO35), top-right corner, near the physical button
+    tft_.setTextColor(TFT_GREEN, TFT_BLACK);
+    tft_.setTextSize(3);
+    int w = tft_.textWidth("+50");
+    tft_.setCursor(240 - w - 6, 2);
+    tft_.print("+50");
+  }
 }
 
-void DisplayService::updateMarquee(const String& ssid, const String& ip) {
+void DisplayService::updateMarquee(const String& ssid, const String& ip, bool dualNudgeActive) {
+  if (dualNudgeActive) {
+    if (dualNudgeLabelDrawn_) return; // static label - draw once, not every call
+    marquee_.fillSprite(TFT_BLACK);
+    marquee_.setTextSize(3);
+    marquee_.setTextColor(TFT_RED, TFT_BLACK);
+
+    // "-50" for the position button (GPIO0), bottom-right corner, near the
+    // physical button. If it lands on the wrong side for your board, this
+    // is the one line to change - swap it to a left-aligned x instead.
+    int w = marquee_.textWidth("-50");
+    marquee_.setCursor(kMarqueeW - w - 10, 4); // y=4 keeps the size-3 text within the 31px sprite height
+    marquee_.print("-50");
+
+    marquee_.pushSprite(0, kMarqueeY);
+    dualNudgeLabelDrawn_ = true;
+    return;
+  }
+  dualNudgeLabelDrawn_ = false; // reset so it redraws fresh the next time this mode is entered
+
   String text = "WiFi: " + ssid + "     http://" + ip + "     ";
 
   if (text != marqueeText_) {

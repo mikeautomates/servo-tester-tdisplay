@@ -213,10 +213,8 @@
       <div class="chip" id="chipPot" onclick="setMode('pot')">Potentiometer</div>
       <div class="chip" id="chipWeb" onclick="setMode('web')">Web control</div>
       <div class="chip" id="chipSweep" onclick="setMode('sweep')">Auto sweep</div>
-      <div class="chip" id="chipNudgePlus" onclick="setMode('nudgeplus')">+50 button</div>
-      <div class="chip" id="chipNudgeMinus" onclick="setMode('nudgeminus')">-50 button</div>
     </div>
-    <p class="hint">Any control on this page switches to Web mode automatically. The mode button (GPIO35) cycles Pot &rarr; Web &rarr; Sweep &rarr; +50 &rarr; -50; a ~1s hold snaps to center; a ~3s hold toggles Extended Range. The position button (GPIO0) cycles Center/Max/Min normally, or steps &plusmn;50&micro;s per press while in the +50/-50 modes.</p>
+    <p class="hint">Any control on this page switches to Web mode automatically. Physical buttons: the mode button (GPIO35) cycles Pot &rarr; Web &rarr; Sweep &rarr; +50 &rarr; -50 (short press), snaps to center (~1s hold), or toggles Extended Range (~3s hold). The position button (GPIO0) cycles Center/Max/Min normally, steps &plusmn;50&micro;s per press while in the +50/-50 modes, or - held for ~0.8s - enters/exits <strong>dual-nudge mode</strong>: GPIO0 becomes -50 and GPIO35 becomes +50, for fast two-button stepping. Exit with another long press of GPIO0.</p>
   </div>
 
   <div class="card">
@@ -261,7 +259,7 @@ const ARC_LEN = 283; // approx length of the SVG arc path above
 
 let sliderBusy = false;
 let lastSliderSend = 0;
-let numInputFocused = false;
+let numInputDirty = false; // true from the moment they start typing until they submit
 
 slider.addEventListener('input', () => {
   sliderBusy = true;
@@ -276,14 +274,19 @@ slider.addEventListener('change', () => {
   setTimeout(() => { sliderBusy = false; }, 300);
 });
 
-// Same problem the slider has - don't let the status poll stomp on whatever
-// the person is actively typing.
-numInput.addEventListener('focus', () => { numInputFocused = true; });
-numInput.addEventListener('blur', () => { numInputFocused = false; });
+// Two layers of protection against the status poll clobbering the field
+// while the person is typing in it:
+//  1. numInputDirty - set true on the very first keystroke, so even if a
+//     poll lands mid-typing before focus fully registers, it's covered.
+//  2. document.activeElement check - a live check at the moment of each
+//     poll, immune to any focus/blur event we might have missed.
+numInput.addEventListener('input', () => { numInputDirty = true; });
+numInput.addEventListener('blur', () => { numInputDirty = false; }); // abandoning the edit resyncs on next poll
 numInput.addEventListener('keydown', (e) => {
   if (e.key === 'Enter') {
     setManual();
-    numInput.blur(); // also releases numInputFocused via the blur handler above
+    numInputDirty = false;
+    numInput.blur();
   }
 });
 
@@ -294,6 +297,7 @@ function setManual() {
   const v = numInput.value;
   if (v === '') return;
   apiSet(v);
+  numInputDirty = false;
 }
 function preset(type) {
   fetch('/api/preset?type=' + type).then(r => r.json()).then(applyStatus);
@@ -334,14 +338,13 @@ function applyStatus(j) {
   pctVal.textContent = j.pct + ' %';
   setGauge(j.pct);
   if (!sliderBusy) slider.value = j.us;
-  if (!numInputFocused) numInput.value = j.us;
+  const numInputIsFocused = document.activeElement === numInput;
+  if (!numInputIsFocused && !numInputDirty) numInput.value = j.us;
   document.getElementById('stepSelect').value = j.step;
 
   document.getElementById('chipPot').classList.toggle('active', j.mode === 'POT');
   document.getElementById('chipWeb').classList.toggle('active', j.mode === 'WEB');
   document.getElementById('chipSweep').classList.toggle('active', j.mode === 'SWEEP');
-  document.getElementById('chipNudgePlus').classList.toggle('active', j.mode === '+50');
-  document.getElementById('chipNudgeMinus').classList.toggle('active', j.mode === '-50');
 
   stationText.textContent = j.stationCount + (j.stationCount === 1 ? ' connected' : ' connected');
 

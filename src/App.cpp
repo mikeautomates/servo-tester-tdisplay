@@ -7,6 +7,7 @@ const char* kApSsid = "ServoTester";
 const char* kApPassword = ""; // 8+ chars, or "" for an open network
 const unsigned long kLongPressMs = 700;
 const unsigned long kVeryLongPressMs = 3000; // holds past this toggle extended range
+const unsigned long kDualNudgeLongPressMs = 800; // hold GPIO0 past this to enter/exit dual-nudge
 const unsigned long kDisplayIntervalMs = 150;
 }  // namespace
 
@@ -48,13 +49,18 @@ void App::handleButton() {
   }
 
   if (!down && buttonWasDown_ && !longPressHandled_) {
-    // short press: cycle Pot -> Web -> Sweep -> +50 -> -50 -> Pot ...
-    switch (servo_.mode()) {
-      case ServoMode::Pot:        servo_.setMode(ServoMode::Web);        break;
-      case ServoMode::Web:        servo_.setMode(ServoMode::Sweep);      break;
-      case ServoMode::Sweep:      servo_.setMode(ServoMode::NudgePlus);  break;
-      case ServoMode::NudgePlus:  servo_.setMode(ServoMode::NudgeMinus); break;
-      case ServoMode::NudgeMinus: servo_.setMode(ServoMode::Pot);        break;
+    if (dualNudgeMode_) {
+      // dual-nudge mode: this button is repurposed as the +50 button
+      servo_.nudgeFixedUs(50);
+    } else {
+      // short press: cycle Pot -> Web -> Sweep -> +50 -> -50 -> Pot ...
+      switch (servo_.mode()) {
+        case ServoMode::Pot:        servo_.setMode(ServoMode::Web);        break;
+        case ServoMode::Web:        servo_.setMode(ServoMode::Sweep);      break;
+        case ServoMode::Sweep:      servo_.setMode(ServoMode::NudgePlus);  break;
+        case ServoMode::NudgePlus:  servo_.setMode(ServoMode::NudgeMinus); break;
+        case ServoMode::NudgeMinus: servo_.setMode(ServoMode::Pot);        break;
+      }
     }
   }
 
@@ -64,12 +70,28 @@ void App::handleButton() {
 void App::handlePosButton() {
   bool down = (digitalRead(BOARD_POS_BUTTON_PIN) == LOW);
 
-  if (!down && posButtonWasDown_) {
-    // short press only - no long-press behaviour on this button
-    switch (servo_.mode()) {
-      case ServoMode::NudgePlus:  servo_.nudgeFixedUs(50);  break;
-      case ServoMode::NudgeMinus: servo_.nudgeFixedUs(-50); break;
-      default:                    servo_.cyclePreset();     break;
+  if (down && !posButtonWasDown_) {
+    posButtonPressStartMs_ = millis();
+    posLongPressHandled_ = false;
+  }
+
+  if (down && !posLongPressHandled_ && (millis() - posButtonPressStartMs_ > kDualNudgeLongPressMs)) {
+    dualNudgeMode_ = !dualNudgeMode_;
+    if (dualNudgeMode_) servo_.setMode(ServoMode::Web); // freeze Pot/Sweep automation while manually nudging
+    posLongPressHandled_ = true;
+  }
+
+  if (!down && posButtonWasDown_ && !posLongPressHandled_) {
+    // short press
+    if (dualNudgeMode_) {
+      // dual-nudge mode: this button is repurposed as the -50 button
+      servo_.nudgeFixedUs(-50);
+    } else {
+      switch (servo_.mode()) {
+        case ServoMode::NudgePlus:  servo_.nudgeFixedUs(50);  break;
+        case ServoMode::NudgeMinus: servo_.nudgeFixedUs(-50); break;
+        default:                    servo_.cyclePreset();     break;
+      }
     }
   }
 
@@ -78,11 +100,12 @@ void App::handlePosButton() {
 
 void App::updateDisplay() {
   DisplayState state;
-  state.modeName = servo_.modeName();
+  state.modeName = dualNudgeMode_ ? "DUAL" : servo_.modeName(); // short - "+50" now sits top-right on this row
   state.currentUs = servo_.currentUs();
   state.percent = servo_.percent();
   state.crActive = servo_.crTestActive();
   state.extendedRange = servo_.extendedRange();
+  state.dualNudgeActive = dualNudgeMode_;
   state.rangeMinUs = servo_.rangeMinUs();
   state.rangeMaxUs = servo_.rangeMaxUs();
   state.wifiSsid = wifi_.ssid();
@@ -96,7 +119,7 @@ void App::loop() {
   servo_.loop();
   web_.loop();
 
-  display_.updateMarquee(wifi_.ssid(), wifi_.ipAddress());
+  display_.updateMarquee(wifi_.ssid(), wifi_.ipAddress(), dualNudgeMode_);
 
   if (millis() - lastDisplayMs_ >= kDisplayIntervalMs) {
     lastDisplayMs_ = millis();

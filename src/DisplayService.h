@@ -9,6 +9,7 @@ struct DisplayState {
   int percent;
   bool crActive;
   bool extendedRange;
+  bool dualNudgeActive;
   int rangeMinUs;
   int rangeMaxUs;
   String wifiSsid;
@@ -23,9 +24,10 @@ public:
   // skips redraw when nothing has changed.
   void render(const DisplayState& state);
 
-  // Scrolling SSID/IP marquee under the bar. Safe to call every loop() -
-  // it throttles and paces its own scroll speed internally.
-  void updateMarquee(const String& ssid, const String& ip);
+  // Scrolling SSID/IP marquee under the bar, OR (while dualNudgeActive is
+  // true) static "-50"/"+50" labels near the two physical buttons instead.
+  // Safe to call every loop() - it throttles/paces itself internally.
+  void updateMarquee(const String& ssid, const String& ip, bool dualNudgeActive);
 
 private:
   TFT_eSPI tft_;
@@ -38,6 +40,7 @@ private:
   int marqueeX_ = 0;
   bool marqueeFits_ = true;
   unsigned long lastMarqueeStepMs_ = 0;
+  bool dualNudgeLabelDrawn_ = false; // drawn once per activation, not every call
 
   static const int kMarqueeY = 110;   // just below the PWM bar
   static const int kMarqueeH = 31;    // remaining height to the bottom of a 135px screen
