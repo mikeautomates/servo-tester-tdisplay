@@ -40,6 +40,8 @@ void WebUi::setupRoutes() {
       server_.send(500, "text/plain", "index.html missing - did you upload the LittleFS filesystem image?");
       return;
     }
+    server_.sendHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+    server_.sendHeader("Pragma", "no-cache");
     server_.streamFile(f, "text/html");
     f.close();
   });

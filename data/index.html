@@ -249,6 +249,7 @@
 
 <script>
 const slider = document.getElementById('slider');
+const numInput = document.getElementById('numInput');
 const usVal = document.getElementById('usVal');
 const pctVal = document.getElementById('pctVal');
 const gaugeArc = document.getElementById('gaugeArc');
@@ -260,6 +261,7 @@ const ARC_LEN = 283; // approx length of the SVG arc path above
 
 let sliderBusy = false;
 let lastSliderSend = 0;
+let numInputFocused = false;
 
 slider.addEventListener('input', () => {
   sliderBusy = true;
@@ -274,11 +276,22 @@ slider.addEventListener('change', () => {
   setTimeout(() => { sliderBusy = false; }, 300);
 });
 
+// Same problem the slider has - don't let the status poll stomp on whatever
+// the person is actively typing.
+numInput.addEventListener('focus', () => { numInputFocused = true; });
+numInput.addEventListener('blur', () => { numInputFocused = false; });
+numInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    setManual();
+    numInput.blur(); // also releases numInputFocused via the blur handler above
+  }
+});
+
 function apiSet(us) {
   fetch('/api/set?us=' + us).then(r => r.json()).then(applyStatus);
 }
 function setManual() {
-  const v = document.getElementById('numInput').value;
+  const v = numInput.value;
   if (v === '') return;
   apiSet(v);
 }
@@ -321,7 +334,7 @@ function applyStatus(j) {
   pctVal.textContent = j.pct + ' %';
   setGauge(j.pct);
   if (!sliderBusy) slider.value = j.us;
-  document.getElementById('numInput').value = j.us;
+  if (!numInputFocused) numInput.value = j.us;
   document.getElementById('stepSelect').value = j.step;
 
   document.getElementById('chipPot').classList.toggle('active', j.mode === 'POT');
@@ -354,7 +367,6 @@ function applyStatus(j) {
   if (extToggle.checked !== j.extendedRange) extToggle.checked = j.extendedRange;
   slider.min = j.rangeMin;
   slider.max = j.rangeMax;
-  const numInput = document.getElementById('numInput');
   numInput.min = j.rangeMin;
   numInput.max = j.rangeMax;
   document.getElementById('rangeLabel').textContent = j.extendedRange
