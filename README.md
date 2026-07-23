@@ -15,17 +15,31 @@ your phone to the AP and control the servo from a browser.
   buttons (1/5/10/25/50µs), Min/Center/Max presets
 - **Sweep mode** — auto-sweeps min↔max continuously, useful for exercising a
   servo or listening for binding
+- **+50 / -50 modes** — while in one of these, the position button (GPIO0)
+  nudges the pulse width by a fixed 50µs per press instead of cycling
+  presets, for quick phone-free fine positioning
 - **Continuous-rotation (CR) test** — non-blocking guided sequence
   (Center → Max → Center → Min → Center) with on-screen instructions for
   judging whether a servo is positional or continuous-rotation
-- Onboard button 1 (GPIO35): short press cycles Pot/Web/Sweep, long press
-  snaps straight to center from any mode — a physical "panic button" if the
-  servo does something alarming and your phone isn't handy
-- Onboard button 2 (GPIO0): short press cycles Center → Max → Min → Center,
-  for quick physical position checks without needing your phone out. GPIO0
-  is the ESP32's boot-strap pin, but it's only read during normal runtime
-  here — safe as a button as long as you don't hold it while power-cycling
-  the board.
+- **Extended Range (danger mode)** — an explicit, confirmation-gated toggle
+  (web UI, or a ~3s hold of the mode button) that widens the allowed pulse
+  width from the safe 900–2100µs default to 500–2500µs, for servos that
+  need a wider native range to reach their full mechanical travel. A hard
+  400–2600µs ceiling is enforced in firmware regardless of this toggle.
+  Always resets to locked on page load / power cycle.
+- Onboard button 1 (GPIO35, "mode button"):
+  - short press: cycles Pot → Web → Sweep → +50 → -50 → Pot ...
+  - ~1s hold: snaps straight to center from any mode (a physical "panic
+    button" if the servo does something alarming and your phone isn't
+    handy)
+  - ~3s hold: toggles Extended Range on/off
+- Onboard button 2 (GPIO0, "position button"):
+  - in Pot/Web/Sweep modes: short press cycles Center → Max → Min → Center
+  - in +50/-50 modes: short press steps the pulse width by that fixed
+    amount instead
+  - GPIO0 is the ESP32's boot-strap pin, but it's only read during normal
+    runtime here — safe as a button as long as you don't hold it while
+    power-cycling the board.
 - SSID/IP shown as a large scrolling marquee under the pulse-width bar so
   it's readable from a few feet away
 

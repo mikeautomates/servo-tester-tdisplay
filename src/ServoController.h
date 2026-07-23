@@ -6,7 +6,9 @@
 enum class ServoMode {
   Pot,
   Web,
-  Sweep
+  Sweep,
+  NudgePlus,   // position button (GPIO0) adds +50us per press
+  NudgeMinus   // position button (GPIO0) subtracts 50us per press
 };
 
 enum class ServoPreset {
@@ -38,7 +40,8 @@ public:
 
   void setStepUs(int stepUs) { stepUs_ = stepUs; }
   int stepUs() const { return stepUs_; }
-  void nudge(int direction); // direction: -1 or +1, moves by stepUs_
+  void nudge(int direction); // direction: -1 or +1, moves by stepUs_ (used by the web UI)
+  void nudgeFixedUs(int deltaUs); // fixed-amount nudge, used by the +50/-50 physical modes
 
   void applyPreset(ServoPreset preset);
   void cyclePreset(); // steps Center -> Max -> Min -> Center -> ... each call

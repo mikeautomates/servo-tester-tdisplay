@@ -83,6 +83,8 @@ void WebUi::setupRoutes() {
     String m = server_.arg("value");
     if (m == "pot") servo_->setMode(ServoMode::Pot);
     else if (m == "sweep") servo_->setMode(ServoMode::Sweep);
+    else if (m == "nudgeplus") servo_->setMode(ServoMode::NudgePlus);
+    else if (m == "nudgeminus") servo_->setMode(ServoMode::NudgeMinus);
     else servo_->setMode(ServoMode::Web);
     server_.send(200, "application/json", statusJson());
   });

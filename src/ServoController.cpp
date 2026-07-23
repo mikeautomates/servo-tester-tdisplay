@@ -71,9 +71,11 @@ void ServoController::setMode(ServoMode mode) {
 
 const char* ServoController::modeName() const {
   switch (mode_) {
-    case ServoMode::Pot:   return "POT";
-    case ServoMode::Web:   return "WEB";
-    case ServoMode::Sweep: return "SWEEP";
+    case ServoMode::Pot:        return "POT";
+    case ServoMode::Web:        return "WEB";
+    case ServoMode::Sweep:      return "SWEEP";
+    case ServoMode::NudgePlus:  return "+50";
+    case ServoMode::NudgeMinus: return "-50";
   }
   return "?";
 }
@@ -82,6 +84,12 @@ void ServoController::nudge(int direction) {
   mode_ = ServoMode::Web;
   crActive_ = false;
   writeUs(currentUs_ + direction * stepUs_);
+}
+
+void ServoController::nudgeFixedUs(int deltaUs) {
+  // Doesn't touch mode_ - called while already in NudgePlus/NudgeMinus mode.
+  crActive_ = false;
+  writeUs(currentUs_ + deltaUs);
 }
 
 void ServoController::applyPreset(ServoPreset preset) {

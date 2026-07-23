@@ -6,6 +6,7 @@ namespace {
 const char* kApSsid = "ServoTester";
 const char* kApPassword = ""; // 8+ chars, or "" for an open network
 const unsigned long kLongPressMs = 700;
+const unsigned long kVeryLongPressMs = 3000; // holds past this toggle extended range
 const unsigned long kDisplayIntervalMs = 150;
 }  // namespace
 
@@ -33,6 +34,7 @@ void App::handleButton() {
   if (down && !buttonWasDown_) {
     buttonPressStartMs_ = millis();
     longPressHandled_ = false;
+    extToggleHandled_ = false;
   }
 
   if (down && !longPressHandled_ && (millis() - buttonPressStartMs_ > kLongPressMs)) {
@@ -40,12 +42,19 @@ void App::handleButton() {
     longPressHandled_ = true;
   }
 
+  if (down && !extToggleHandled_ && (millis() - buttonPressStartMs_ > kVeryLongPressMs)) {
+    servo_.setExtendedRange(!servo_.extendedRange());
+    extToggleHandled_ = true;
+  }
+
   if (!down && buttonWasDown_ && !longPressHandled_) {
-    // short press: cycle Pot -> Web -> Sweep -> Pot ...
+    // short press: cycle Pot -> Web -> Sweep -> +50 -> -50 -> Pot ...
     switch (servo_.mode()) {
-      case ServoMode::Pot:   servo_.setMode(ServoMode::Web);   break;
-      case ServoMode::Web:   servo_.setMode(ServoMode::Sweep); break;
-      case ServoMode::Sweep: servo_.setMode(ServoMode::Pot);   break;
+      case ServoMode::Pot:        servo_.setMode(ServoMode::Web);        break;
+      case ServoMode::Web:        servo_.setMode(ServoMode::Sweep);      break;
+      case ServoMode::Sweep:      servo_.setMode(ServoMode::NudgePlus);  break;
+      case ServoMode::NudgePlus:  servo_.setMode(ServoMode::NudgeMinus); break;
+      case ServoMode::NudgeMinus: servo_.setMode(ServoMode::Pot);        break;
     }
   }
 
@@ -57,7 +66,11 @@ void App::handlePosButton() {
 
   if (!down && posButtonWasDown_) {
     // short press only - no long-press behaviour on this button
-    servo_.cyclePreset();
+    switch (servo_.mode()) {
+      case ServoMode::NudgePlus:  servo_.nudgeFixedUs(50);  break;
+      case ServoMode::NudgeMinus: servo_.nudgeFixedUs(-50); break;
+      default:                    servo_.cyclePreset();     break;
+    }
   }
 
   posButtonWasDown_ = down;

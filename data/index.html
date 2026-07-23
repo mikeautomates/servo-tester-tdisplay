@@ -213,8 +213,10 @@
       <div class="chip" id="chipPot" onclick="setMode('pot')">Potentiometer</div>
       <div class="chip" id="chipWeb" onclick="setMode('web')">Web control</div>
       <div class="chip" id="chipSweep" onclick="setMode('sweep')">Auto sweep</div>
+      <div class="chip" id="chipNudgePlus" onclick="setMode('nudgeplus')">+50 button</div>
+      <div class="chip" id="chipNudgeMinus" onclick="setMode('nudgeminus')">-50 button</div>
     </div>
-    <p class="hint">Any control on this page switches to Web mode automatically. The onboard button also cycles modes; a long press always snaps to center.</p>
+    <p class="hint">Any control on this page switches to Web mode automatically. The mode button (GPIO35) cycles Pot &rarr; Web &rarr; Sweep &rarr; +50 &rarr; -50; a ~1s hold snaps to center; a ~3s hold toggles Extended Range. The position button (GPIO0) cycles Center/Max/Min normally, or steps &plusmn;50&micro;s per press while in the +50/-50 modes.</p>
   </div>
 
   <div class="card">
@@ -325,6 +327,8 @@ function applyStatus(j) {
   document.getElementById('chipPot').classList.toggle('active', j.mode === 'POT');
   document.getElementById('chipWeb').classList.toggle('active', j.mode === 'WEB');
   document.getElementById('chipSweep').classList.toggle('active', j.mode === 'SWEEP');
+  document.getElementById('chipNudgePlus').classList.toggle('active', j.mode === '+50');
+  document.getElementById('chipNudgeMinus').classList.toggle('active', j.mode === '-50');
 
   stationText.textContent = j.stationCount + (j.stationCount === 1 ? ' connected' : ' connected');
 
