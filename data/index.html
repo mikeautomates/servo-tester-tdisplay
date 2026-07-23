@@ -137,6 +137,22 @@
   .stop-btn { background: var(--error-bg); border-color: var(--error-border); color: #991b1b; flex: none; padding: 12px 18px; }
 
   .hint { color: var(--muted); font-size: 0.82rem; margin-top: 10px; line-height: 1.4; }
+
+  .danger-card { background: var(--error-bg); border-color: var(--error-border); }
+  .danger-hint { color: #7f1d1d; }
+
+  .switch { position: relative; width: 52px; height: 30px; flex: none; }
+  .switch input { opacity: 0; width: 0; height: 0; }
+  .slider-toggle {
+    position: absolute; cursor: pointer; inset: 0;
+    background: #d1d5db; border-radius: 999px; transition: 0.15s;
+  }
+  .slider-toggle::before {
+    content: ""; position: absolute; height: 22px; width: 22px; left: 4px; bottom: 4px;
+    background: white; border-radius: 50%; transition: 0.15s;
+  }
+  input:checked + .slider-toggle { background: var(--error-border); }
+  input:checked + .slider-toggle::before { transform: translateX(22px); }
 </style>
 </head>
 <body>
@@ -215,6 +231,18 @@
     <p class="hint">A standard servo holds position at every step. A continuous-rotation unit spins at MIN/MAX and should stop only at CENTER &mdash; if it doesn't fully stop, check for a mechanical trim pot.</p>
   </div>
 
+  <div class="card danger-card">
+    <div class="row" style="align-items:center; margin-top:0; justify-content:space-between;">
+      <p class="card-title" style="margin:0; color:#991b1b;">&#9888; Extended Range</p>
+      <label class="switch">
+        <input type="checkbox" id="extendedToggle" onchange="onExtendedToggle()">
+        <span class="slider-toggle"></span>
+      </label>
+    </div>
+    <p class="hint danger-hint" id="rangeLabel">Locked to 900&ndash;2100 &micro;s (safe for any servo).</p>
+    <p class="hint danger-hint">Some servos need pulses outside the safe range to reach their full mechanical travel. Enabling this allows 500&ndash;2500 &micro;s. Watch and listen for buzzing, grinding, or stalling &mdash; back off immediately if you hear any of that. Resets to locked on every page load / power cycle.</p>
+  </div>
+
 </div>
 
 <script>
@@ -268,6 +296,19 @@ function setMode(m) {
 function crStart() { fetch('/api/crtest/start').then(r => r.json()).then(applyStatus); }
 function crStop()  { fetch('/api/crtest/stop').then(r => r.json()).then(applyStatus); }
 
+function onExtendedToggle() {
+  const cb = document.getElementById('extendedToggle');
+  if (cb.checked) {
+    const ok = confirm(
+      'Extended range allows pulse widths outside the safe 900\u20132100\u00b5s range.\n\n' +
+      'Only use this if you know your servo can accept it. Stop immediately if you ' +
+      'hear buzzing, grinding, or feel the servo stall.\n\nEnable extended range?'
+    );
+    if (!ok) { cb.checked = false; return; }
+  }
+  fetch('/api/extended?enabled=' + (cb.checked ? '1' : '0')).then(r => r.json()).then(applyStatus);
+}
+
 function setGauge(pct) {
   const offset = ARC_LEN - (ARC_LEN * Math.max(0, Math.min(100, pct)) / 100);
   gaugeArc.setAttribute('stroke-dashoffset', offset);
@@ -302,6 +343,19 @@ function applyStatus(j) {
     crStagesEl[i].classList.toggle('current', j.crActive && crCurrentIndex(j.crLabel) === i);
     crStagesEl[i].classList.toggle('done', j.crActive && crCurrentIndex(j.crLabel) > i);
   }
+
+  // Extended range: keep the toggle, slider bounds, and number input bounds
+  // in sync with whatever the device is actually enforcing.
+  const extToggle = document.getElementById('extendedToggle');
+  if (extToggle.checked !== j.extendedRange) extToggle.checked = j.extendedRange;
+  slider.min = j.rangeMin;
+  slider.max = j.rangeMax;
+  const numInput = document.getElementById('numInput');
+  numInput.min = j.rangeMin;
+  numInput.max = j.rangeMax;
+  document.getElementById('rangeLabel').textContent = j.extendedRange
+    ? `Extended range ACTIVE: ${j.rangeMin}\u2013${j.rangeMax} \u00b5s. Disable if the servo buzzes, grinds, or stalls.`
+    : `Locked to ${j.rangeMin}\u2013${j.rangeMax} \u00b5s (safe for any servo).`;
 }
 
 function crCurrentIndex(label) {

@@ -21,6 +21,9 @@ String WebUi::statusJson() const {
   doc["step"] = servo_->stepUs();
   doc["crActive"] = servo_->crTestActive();
   doc["crLabel"] = servo_->crTestLabel();
+  doc["extendedRange"] = servo_->extendedRange();
+  doc["rangeMin"] = servo_->rangeMinUs();
+  doc["rangeMax"] = servo_->rangeMaxUs();
   doc["wifiSsid"] = wifi_->ssid();
   doc["wifiIp"] = wifi_->ipAddress();
   doc["stationCount"] = wifi_->stationCount();
@@ -91,6 +94,13 @@ void WebUi::setupRoutes() {
 
   server_.on("/api/crtest/stop", HTTP_GET, [this]() {
     servo_->stopCrTest();
+    server_.send(200, "application/json", statusJson());
+  });
+
+  server_.on("/api/extended", HTTP_GET, [this]() {
+    if (server_.hasArg("enabled")) {
+      servo_->setExtendedRange(server_.arg("enabled") == "1");
+    }
     server_.send(200, "application/json", statusJson());
   });
 }

@@ -27,9 +27,14 @@ public:
   ServoMode mode() const { return mode_; }
   const char* modeName() const;
 
-  void writeUs(int us);      // clamps to SERVO_US_ABS_MIN/MAX
+  void writeUs(int us);      // clamps to current range (safe, or extended if unlocked)
   int currentUs() const { return currentUs_; }
   int percent() const;       // 0-100 over SERVO_US_MIN..SERVO_US_MAX
+
+  void setExtendedRange(bool enabled);
+  bool extendedRange() const { return extendedRange_; }
+  int rangeMinUs() const { return extendedRange_ ? SERVO_US_EXTENDED_MIN : SERVO_US_SAFE_MIN; }
+  int rangeMaxUs() const { return extendedRange_ ? SERVO_US_EXTENDED_MAX : SERVO_US_SAFE_MAX; }
 
   void setStepUs(int stepUs) { stepUs_ = stepUs; }
   int stepUs() const { return stepUs_; }
@@ -48,6 +53,7 @@ private:
   int currentUs_ = SERVO_US_CENTER;
   int stepUs_ = 10;
   int presetCycleIndex_ = 1; // 0=min, 1=center, 2=max; starts at center to match boot position
+  bool extendedRange_ = false; // always starts locked on boot - never persisted
 
   // sweep state
   int sweepUs_ = 0;

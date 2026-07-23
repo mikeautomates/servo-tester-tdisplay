@@ -8,6 +8,9 @@ struct DisplayState {
   int currentUs;
   int percent;
   bool crActive;
+  bool extendedRange;
+  int rangeMinUs;
+  int rangeMaxUs;
   String wifiSsid;
   String wifiIp;
 };

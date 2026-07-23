@@ -69,6 +69,9 @@ void App::updateDisplay() {
   state.currentUs = servo_.currentUs();
   state.percent = servo_.percent();
   state.crActive = servo_.crTestActive();
+  state.extendedRange = servo_.extendedRange();
+  state.rangeMinUs = servo_.rangeMinUs();
+  state.rangeMaxUs = servo_.rangeMaxUs();
   state.wifiSsid = wifi_.ssid();
   state.wifiIp = wifi_.ipAddress();
   display_.render(state);

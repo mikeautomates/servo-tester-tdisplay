@@ -30,5 +30,19 @@
 #define SERVO_US_MIN              1000
 #define SERVO_US_MAX              2000
 #define SERVO_US_CENTER           1500
-#define SERVO_US_ABS_MIN           900
-#define SERVO_US_ABS_MAX          2100
+
+// Normal ("locked") operating range - safe default for any servo.
+#define SERVO_US_SAFE_MIN          900
+#define SERVO_US_SAFE_MAX         2100
+
+// Extended range, only reachable when the "Extended Range" toggle is enabled
+// on the web UI. Some servos marketed as "180 degree" need pulses out here
+// to reach their full mechanical travel - watch/listen for stalling, buzzing,
+// or grinding, and back off immediately if you hear any of that.
+#define SERVO_US_EXTENDED_MIN       500
+#define SERVO_US_EXTENDED_MAX      2500
+
+// Absolute hard ceiling - enforced no matter what, even in extended mode.
+// Nothing outside this range is a sensible pulse width for any analog servo.
+#define SERVO_US_HARD_MIN           400
+#define SERVO_US_HARD_MAX          2600

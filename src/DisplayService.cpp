@@ -15,7 +15,7 @@ void DisplayService::begin() {
 
 void DisplayService::render(const DisplayState& s) {
   // Skip redundant redraws (reduces flicker while the web UI is polling fast)
-  String key = String(s.modeName) + ":" + s.currentUs + ":" + s.crActive;
+  String key = String(s.modeName) + ":" + s.currentUs + ":" + s.crActive + ":" + s.extendedRange;
   if (key == lastKey_) return;
   lastKey_ = key;
 
@@ -38,9 +38,16 @@ void DisplayService::render(const DisplayState& s) {
   tft_.printf("%3d %%", s.percent);
 
   int barX = 4, barY = 90, barW = 220, barH = 14;
-  tft_.drawRect(barX, barY, barW, barH, TFT_DARKGREY);
-  int fillW = map(constrain(s.currentUs, 900, 2100), 900, 2100, 0, barW - 2);
-  tft_.fillRect(barX + 1, barY + 1, fillW, barH - 2, s.crActive ? TFT_ORANGE : TFT_GREEN);
+  tft_.drawRect(barX, barY, barW, barH, s.extendedRange ? TFT_RED : TFT_DARKGREY);
+  int fillW = map(constrain(s.currentUs, s.rangeMinUs, s.rangeMaxUs), s.rangeMinUs, s.rangeMaxUs, 0, barW - 2);
+  tft_.fillRect(barX + 1, barY + 1, fillW, barH - 2, s.crActive ? TFT_ORANGE : (s.extendedRange ? TFT_RED : TFT_GREEN));
+
+  if (s.extendedRange) {
+    tft_.setTextColor(TFT_RED, TFT_BLACK);
+    tft_.setTextSize(1);
+    tft_.setCursor(barX + barW - 40, barY - 10);
+    tft_.print("DANGER");
+  }
 }
 
 void DisplayService::updateMarquee(const String& ssid, const String& ip) {
@@ -56,7 +63,7 @@ void DisplayService::updateMarquee(const String& ssid, const String& ip) {
     // Static case (fits without scrolling): draw once immediately, centered.
     if (marqueeFits_) {
       marquee_.fillSprite(TFT_BLACK);
-      int y = (kMarqueeH - kMarqueeTextSize * 8) / 2;
+      int y = kMarqueeTopPadPx;
       marquee_.setCursor((kMarqueeW - marqueeTextWidth_) / 2, y);
       marquee_.print(marqueeText_);
       marquee_.pushSprite(0, kMarqueeY);

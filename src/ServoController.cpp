@@ -36,8 +36,20 @@ void ServoController::begin() {
   sweepDir_ = 1;
 }
 
+void ServoController::setExtendedRange(bool enabled) {
+  extendedRange_ = enabled;
+  if (!enabled) {
+    // Snap back into the safe range immediately if we were out in extended territory.
+    writeUs(currentUs_);
+  }
+}
+
 void ServoController::writeUs(int us) {
-  us = constrain(us, SERVO_US_ABS_MIN, SERVO_US_ABS_MAX);
+  int lo = extendedRange_ ? SERVO_US_EXTENDED_MIN : SERVO_US_SAFE_MIN;
+  int hi = extendedRange_ ? SERVO_US_EXTENDED_MAX : SERVO_US_SAFE_MAX;
+  us = constrain(us, lo, hi);
+  // Belt-and-braces: never exceed the hard ceiling regardless of mode.
+  us = constrain(us, SERVO_US_HARD_MIN, SERVO_US_HARD_MAX);
   currentUs_ = us;
 
   uint32_t periodUs = 1000000UL / SERVO_PWM_FREQ_HZ;
