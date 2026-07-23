@@ -36,11 +36,11 @@ private:
   bool marqueeFits_ = true;
   unsigned long lastMarqueeStepMs_ = 0;
 
-  static const int kMarqueeY = 104;   // just below the PWM bar
+  static const int kMarqueeY = 110;   // just below the PWM bar
   static const int kMarqueeH = 31;    // remaining height to the bottom of a 135px screen
   static const int kMarqueeW = 240;
-  static const int kMarqueeTextSize = 3;
-  static const int kMarqueeTopPadPx = 7;   // gap between the PWM bar and the text rather than centering
+  static const int kMarqueeTextSize = 2;
+  static const int kMarqueeTopPadPx = 9;   // gap between the PWM bar and the text
   static const int kMarqueeStepPx = 3;
   static const unsigned long kMarqueeStepMs = 30;
 };
