@@ -14,6 +14,7 @@ struct DisplayState {
   int rangeMaxUs;
   String wifiSsid;
   String wifiIp;
+  float supplyVoltage;
 };
 
 class DisplayService {
@@ -24,10 +25,11 @@ public:
   // skips redraw when nothing has changed.
   void render(const DisplayState& state);
 
-  // Scrolling SSID/IP marquee under the bar, OR (while dualNudgeActive is
-  // true) static "-50"/"+50" labels near the two physical buttons instead.
-  // Safe to call every loop() - it throttles/paces itself internally.
-  void updateMarquee(const String& ssid, const String& ip, bool dualNudgeActive);
+  // Scrolling SSID/IP/voltage marquee under the bar, OR (while
+  // dualNudgeActive is true) static "-50"/"+50" labels near the two
+  // physical buttons instead. Safe to call every loop() - it throttles
+  // and paces its own scroll speed internally.
+  void updateMarquee(const String& ssid, const String& ip, bool dualNudgeActive, float supplyVoltage);
 
 private:
   TFT_eSPI tft_;

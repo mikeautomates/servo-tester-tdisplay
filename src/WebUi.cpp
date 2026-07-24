@@ -2,9 +2,10 @@
 #include <ArduinoJson.h>
 #include <LittleFS.h>
 
-void WebUi::begin(ServoController* servo, WifiService* wifi) {
+void WebUi::begin(ServoController* servo, WifiService* wifi, PowerMonitor* power) {
   servo_ = servo;
   wifi_ = wifi;
+  power_ = power;
   setupRoutes();
   server_.begin();
 }
@@ -27,6 +28,12 @@ String WebUi::statusJson() const {
   doc["wifiSsid"] = wifi_->ssid();
   doc["wifiIp"] = wifi_->ipAddress();
   doc["stationCount"] = wifi_->stationCount();
+  float volts = power_->voltageVolts();
+  if (volts < 0) {
+    doc["voltageV"] = nullptr; // monitoring disabled or not wired up
+  } else {
+    doc["voltageV"] = roundf(volts * 100) / 100.0f; // 2 decimal places
+  }
 
   String out;
   serializeJson(doc, out);

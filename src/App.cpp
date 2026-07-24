@@ -23,8 +23,9 @@ void App::begin() {
 
   servo_.begin();
   display_.begin();
+  power_.begin();
   wifi_.begin(kApSsid, kApPassword);
-  web_.begin(&servo_, &wifi_);
+  web_.begin(&servo_, &wifi_, &power_);
 
   updateDisplay();
 }
@@ -110,6 +111,7 @@ void App::updateDisplay() {
   state.rangeMaxUs = servo_.rangeMaxUs();
   state.wifiSsid = wifi_.ssid();
   state.wifiIp = wifi_.ipAddress();
+  state.supplyVoltage = power_.voltageVolts();
   display_.render(state);
 }
 
@@ -118,8 +120,9 @@ void App::loop() {
   handlePosButton();
   servo_.loop();
   web_.loop();
+  power_.update();
 
-  display_.updateMarquee(wifi_.ssid(), wifi_.ipAddress(), dualNudgeMode_);
+  display_.updateMarquee(wifi_.ssid(), wifi_.ipAddress(), dualNudgeMode_, power_.voltageVolts());
 
   if (millis() - lastDisplayMs_ >= kDisplayIntervalMs) {
     lastDisplayMs_ = millis();

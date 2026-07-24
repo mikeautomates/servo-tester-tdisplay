@@ -59,7 +59,7 @@ void DisplayService::render(const DisplayState& s) {
   }
 }
 
-void DisplayService::updateMarquee(const String& ssid, const String& ip, bool dualNudgeActive) {
+void DisplayService::updateMarquee(const String& ssid, const String& ip, bool dualNudgeActive, float supplyVoltage) {
   if (dualNudgeActive) {
     if (dualNudgeLabelDrawn_) return; // static label - draw once, not every call
     marquee_.fillSprite(TFT_BLACK);
@@ -86,6 +86,13 @@ void DisplayService::updateMarquee(const String& ssid, const String& ip, bool du
   marquee_.setTextColor(TFT_YELLOW, TFT_BLACK);
 
   String text = "WiFi: " + ssid + "     http://" + ip + "     ";
+  if (supplyVoltage >= 0) {
+    char voltStr[16];
+    snprintf(voltStr, sizeof(voltStr), "%.2fV", supplyVoltage);
+    text += "Supply: ";
+    text += voltStr;
+    text += "     ";
+  }
 
   if (text != marqueeText_) {
     marqueeText_ = text;

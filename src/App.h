@@ -5,6 +5,7 @@
 #include "DisplayService.h"
 #include "WifiService.h"
 #include "WebUi.h"
+#include "PowerMonitor.h"
 
 class App {
 public:
@@ -16,6 +17,7 @@ private:
   DisplayService display_;
   WifiService wifi_;
   WebUi web_;
+  PowerMonitor power_;
 
   // onboard button (GPIO35): short press cycles Pot/Web/Sweep/+50/-50,
   // medium hold centers, very long hold toggles extended range

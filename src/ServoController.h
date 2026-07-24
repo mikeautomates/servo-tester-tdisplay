@@ -56,6 +56,7 @@ private:
   int currentUs_ = SERVO_US_CENTER;
   int stepUs_ = 10;
   int presetCycleIndex_ = 1; // 0=min, 1=center, 2=max; starts at center to match boot position
+  int presetCycleDir_ = 1;   // ping-pong direction: min<->center<->max<->center<->min...
   bool extendedRange_ = false; // always starts locked on boot - never persisted
 
   // sweep state

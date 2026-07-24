@@ -44,15 +44,26 @@ your phone to the AP and control the servo from a browser.
   - ~3s hold: toggles Extended Range on/off — also works regardless of
     dual-nudge mode
 - Onboard button 2 (GPIO0, "position button"):
-  - short press: cycles Center → Max → Min → Center in Pot/Web/Sweep
+  - short press: cycles Min → Center → Max → Center → Min → Center → Max ...
+    (a ping-pong through center each time, not a flat round-robin) in
+    Pot/Web/Sweep
     modes, steps the pulse width by a fixed amount in +50/-50 modes, or
     acts as the -50 button while dual-nudge mode is active
   - ~0.8s hold: enters or exits dual-nudge mode
   - GPIO0 is the ESP32's boot-strap pin, but it's only read during normal
     runtime here — safe as a button as long as you don't hold it while
     power-cycling the board.
-- SSID/IP shown as a large scrolling marquee under the pulse-width bar so
-  it's readable from a few feet away
+- **Supply voltage monitoring** (fully optional) — reads the rail voltage
+  via a resistor divider on GPIO36 (see Wiring below), shown as a
+  color-coded pill in the web UI toolbar and scrolled into the on-device
+  marquee text. Useful for catching brownout risk (voltage sagging under
+  servo load) or an accidental overvoltage connection before it causes a
+  problem. If you haven't wired the divider, set
+  `VOLTAGE_MONITORING_ENABLED` to `0` in `include/BoardPins.h` - the pin
+  otherwise floats and produces noisy, misleading readings rather than a
+  clean 0V, so this cleanly hides the feature instead of showing bad data.
+- SSID/IP/voltage shown as a large scrolling marquee under the pulse-width
+  bar so it's readable from a few feet away
 
 ## Wiring
 
@@ -63,6 +74,17 @@ your phone to the AP and control the servo from a browser.
 | Servo power/ground | **separate 5–6V supply**, GND common with the ESP32 |
 | Mode button | GPIO35 (built into the T-Display board) |
 | Position button | GPIO0 (built into the T-Display board) |
+| Voltage sense | GPIO36 ("VP"), via a 220kΩ/100kΩ divider — **never wire the rail directly to this pin** |
+
+Voltage divider: `rail --[220kΩ]--+--[100kΩ]-- GND`, with GPIO36 reading the
+junction. This scales a 0–10.5V rail down into the ESP32 ADC's safe 0–3.3V
+range. A 100nF capacitor across the 100kΩ resistor helps smooth out noise
+from the servo's current draw. If `GPIO36`/`VP` isn't broken out on your
+specific T-Display revision, GPIO32 or GPIO33 work as drop-in alternatives —
+just update `VOLTAGE_SENSE_PIN` in `include/BoardPins.h`. After wiring it
+up, compare a reading against a multimeter and adjust
+`VOLTAGE_CALIBRATION_FACTOR` in the same file if needed — resistor
+tolerance is usually the main source of error.
 
 TFT pins (4, 5, 16, 18, 19, 23) are fixed by the board and already handled
 by `include/User_Setup_TDisplay.h` — don't reuse them.
@@ -113,6 +135,7 @@ src/
   DisplayService.h/.cpp     T-Display TFT rendering
   WifiService.h/.cpp        SoftAP setup
   WebUi.h/.cpp              WebServer routes + JSON status API
+  PowerMonitor.h/.cpp       Supply voltage sensing via resistor divider
 data/
   index.html                phone-facing web UI (served from LittleFS)
 ```

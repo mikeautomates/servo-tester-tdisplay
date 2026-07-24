@@ -96,16 +96,40 @@ void ServoController::applyPreset(ServoPreset preset) {
   mode_ = ServoMode::Web;
   crActive_ = false;
   switch (preset) {
-    case ServoPreset::Min:    writeUs(SERVO_US_MIN); presetCycleIndex_ = 0; break;
-    case ServoPreset::Max:    writeUs(SERVO_US_MAX); presetCycleIndex_ = 2; break;
-    case ServoPreset::Center: writeUs(SERVO_US_CENTER); presetCycleIndex_ = 1; break;
+    case ServoPreset::Min:
+      writeUs(SERVO_US_MIN);
+      presetCycleIndex_ = 0;
+      presetCycleDir_ = 1;  // next physical press heads back toward center
+      break;
+    case ServoPreset::Max:
+      writeUs(SERVO_US_MAX);
+      presetCycleIndex_ = 2;
+      presetCycleDir_ = -1; // next physical press heads back toward center
+      break;
+    case ServoPreset::Center:
+      writeUs(SERVO_US_CENTER);
+      presetCycleIndex_ = 1;
+      // direction left as-is - ambiguous which way "center" implies next
+      break;
   }
 }
 
 void ServoController::cyclePreset() {
   mode_ = ServoMode::Web;
   crActive_ = false;
-  presetCycleIndex_ = (presetCycleIndex_ + 1) % 3;
+
+  // Ping-pong: min -> center -> max -> center -> min -> center -> max ...
+  // Direction only flips at the two extremes, so center always sits
+  // between a min and a max rather than being skipped over.
+  presetCycleIndex_ += presetCycleDir_;
+  if (presetCycleIndex_ <= 0) {
+    presetCycleIndex_ = 0;
+    presetCycleDir_ = 1;
+  } else if (presetCycleIndex_ >= 2) {
+    presetCycleIndex_ = 2;
+    presetCycleDir_ = -1;
+  }
+
   switch (presetCycleIndex_) {
     case 0: writeUs(SERVO_US_MIN);    break;
     case 1: writeUs(SERVO_US_CENTER); break;

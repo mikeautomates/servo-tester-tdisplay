@@ -58,8 +58,11 @@
     display: inline-flex; align-items: center; gap: 6px;
     padding: 6px 12px; background: white; border: 1px solid var(--border);
     border-radius: 999px; font-size: 0.85rem; box-shadow: var(--shadow);
-    white-space: nowrap;
+    white-space: nowrap; font-weight: 600; transition: background 0.2s, border-color 0.2s, color 0.2s;
   }
+  .status-pill.volt-ok { background: var(--success-bg); border-color: var(--success-border); color: #065f46; }
+  .status-pill.volt-warn { background: var(--warn-bg); border-color: var(--warn-border); color: #92400e; }
+  .status-pill.volt-danger { background: var(--error-bg); border-color: var(--error-border); color: #991b1b; }
 
   .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--success-border); flex: none; }
 
@@ -160,7 +163,10 @@
 <div class="toolbar">
   <div class="toolbar-inner">
     <h1>Servo Tester</h1>
-    <div class="status-pill"><span class="dot" id="apDot"></span><span id="stationText">0 connected</span></div>
+    <div style="display:flex; gap:8px; align-items:center;">
+      <div class="status-pill" id="voltPill"><span id="voltText">--.-V</span></div>
+      <div class="status-pill"><span class="dot" id="apDot"></span><span id="stationText">0 connected</span></div>
+    </div>
   </div>
 </div>
 
@@ -254,6 +260,7 @@ const gaugeArc = document.getElementById('gaugeArc');
 const crLabel = document.getElementById('crLabel');
 const crStagesEl = document.getElementById('crStages').children;
 const stationText = document.getElementById('stationText');
+const voltText = document.getElementById('voltText');
 
 const ARC_LEN = 283; // approx length of the SVG arc path above
 
@@ -347,6 +354,22 @@ function applyStatus(j) {
   document.getElementById('chipSweep').classList.toggle('active', j.mode === 'SWEEP');
 
   stationText.textContent = j.stationCount + (j.stationCount === 1 ? ' connected' : ' connected');
+
+  const voltPill = document.getElementById('voltPill');
+  if (typeof j.voltageV === 'number') {
+    voltPill.style.display = '';
+    voltText.textContent = j.voltageV.toFixed(2) + 'V';
+    voltPill.classList.remove('volt-ok', 'volt-warn', 'volt-danger');
+    if (j.voltageV < 4.0 || j.voltageV > 8.0) {
+      voltPill.classList.add('volt-danger');   // brownout risk, or likely wired wrong
+    } else if (j.voltageV < 4.5 || j.voltageV > 6.5) {
+      voltPill.classList.add('volt-warn');     // getting marginal for most servos
+    } else {
+      voltPill.classList.add('volt-ok');
+    }
+  } else {
+    voltPill.style.display = 'none'; // monitoring disabled or not wired up - don't show misleading data
+  }
 
   if (j.crActive) {
     crLabel.classList.remove('idle');
